@@ -1,0 +1,6 @@
+include *.rst
+include *.txt
+recursive-include docs *.bat *.py *.rst
+include docs/Makefile
+include tox.ini
+include VERSION
