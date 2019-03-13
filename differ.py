@@ -6,7 +6,6 @@ from openpyxl.utils import get_column_letter
 from openpyxl.utils import column_index_from_string
 from openpyxl.utils.cell import coordinate_from_string
 
-
 class Rect(object):
 
     def __init__(self, r):
@@ -23,7 +22,6 @@ class Rect(object):
 
     def GetMaxColumn(self):
         return self.r[1][0]
-
 
 class ExcelInfo(object):
     def __init__(self, data, dataRange):
@@ -78,7 +76,6 @@ class ExcelHelper(object):
     @staticmethod
     def CoordinateFromStr(strCoor):
         return coordinate_from_string(strCoor)
-
 
 class ExcelDiffer(object):
 
@@ -151,34 +148,35 @@ class ExcelDiffer(object):
         if srcExcel.GetMaxRow() >= dstExcel.GetMaxRow() and srcExcel.GetMinRow() >= dstExcel.GetMinRow():
             diffResults.update({
                 "rows": {
-                    "new": list(range(minRows + 1, intersectionRange[0][1] + 1)),
-                    "del": list(range(intersectionRange[1][1] + 2, maxRows + 2)),
+                    "new": list(range(minRows+1, intersectionRange[0][1]+1)),
+                    "del": list(range(intersectionRange[1][1]+2, maxRows+2)),
                 }
             })
         else:
             diffResults.update({
                 "rows": {
-                    "new": list(range(intersectionRange[1][1] + 2, maxRows + 2)),
-                    "del": list(range(minRows + 1, intersectionRange[0][1] + 1)),
+                    "new": list(range(intersectionRange[1][1]+2, maxRows+2)),
+                    "del": list(range(minRows+1, intersectionRange[0][1]+1)),
                 }
             })
+            
 
-        diffResults["columns"] = {"new": [], "del": [], }
+        diffResults["columns"] = {"new":[], "del":[],}
         if srcExcel.GetMaxColumn() >= dstExcel.GetMaxColumn() and srcExcel.GetMinColumn() >= dstExcel.GetMinColumn():
             for delCol in range(minCols, intersectionRange[0][0]):
-                diffResults["columns"]["new"].append(get_column_letter(delCol + 1))
-            for newCol in range(intersectionRange[1][0] + 1, maxCols + 1):
-                diffResults["columns"]["del"].append(get_column_letter(newCol + 1))
+                diffResults["columns"]["new"].append(get_column_letter(delCol+1))
+            for newCol in range(intersectionRange[1][0]+1, maxCols+1):
+                diffResults["columns"]["del"].append(get_column_letter(newCol+1))
         else:
-            for newCol in range(intersectionRange[1][0] + 1, maxCols + 1):
-                diffResults["columns"]["new"].append(get_column_letter(newCol + 1))
+            for newCol in range(intersectionRange[1][0]+1, maxCols+1):
+                diffResults["columns"]["new"].append(get_column_letter(newCol+1))
             for delCol in range(minCols, intersectionRange[0][0]):
-                diffResults["columns"]["del"].append(get_column_letter(delCol + 1))
+                diffResults["columns"]["del"].append(get_column_letter(delCol+1))
 
         diffResults["cells"] = {}
-        for y in range(intersectionRange[0][1], intersectionRange[1][1] + 1):
+        for y in range(intersectionRange[0][1], intersectionRange[1][1]+1):
             res = {}
-            for x in range(intersectionRange[0][0], intersectionRange[1][0] + 1):
+            for x in range(intersectionRange[0][0], intersectionRange[1][0]+1):
                 if srcExcel.data[y][x] == dstExcel.data[y][x]:
                     continue
                 res[get_column_letter(x + 1) + str(y + 1)] = (srcExcel.data[y][x], dstExcel.data[y][x])
