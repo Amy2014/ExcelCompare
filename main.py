@@ -44,8 +44,6 @@ class MyApp(tk.Tk):
 
         self.InitFrame()
 
-        self.InitTableTitleFlame(srcPath, dstPath)
-
         self.InitTableFlame(srcPath, dstPath)
 
         self.InitButtonFlame()
@@ -61,26 +59,23 @@ class MyApp(tk.Tk):
         #self.columnconfigure(0, weight=1)
         #self.rowconfigure(0, weight=1)
 
-
-    def InitTableTitleFlame(self, srcPath, dstPath):
+    def InitTableTitleFlame(self, tableFrame,srcPath, dstPath):
         if srcPath is None:
             srcPath = ""
         if dstPath is None:
             dstPath = ""
 
-        tableTitleFrame = Frame(self)
+        #tableTitleFrame = Frame(self)
 
-        srcPathLabel = Label(tableTitleFrame, text=srcPath)
-        srcPathLabel.grid(row=0, column=0)
+        # srcPathLabel = Label(tableTitleFrame, text=srcPath)
+        # srcPathLabel.grid(row=0, column=0)
 
-        dstPathLabel = Label(tableTitleFrame, text=dstPath)
-        dstPathLabel.grid(row=0, column=1)
+        srcPathLabel = Label(tableFrame, text=srcPath)
+        srcPathLabel.grid(row=0, column=0,sticky=tk.E)
 
-        tableTitleFrame.columnconfigure(0, weight=1)
+        dstPathLabel = Label(tableFrame, text=dstPath)
+        dstPathLabel.grid(row=0, column=2,sticky=tk.E)
 
-        tableTitleFrame.columnconfigure(1, weight=1)
-
-        tableTitleFrame.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=0, column=0)
 
     def InitTableFlame(self, srcPath, dstPath):
         if not srcPath or not dstPath:
@@ -94,6 +89,8 @@ class MyApp(tk.Tk):
 
         tableFrame = Frame(self)
 
+        self.InitTableTitleFlame(tableFrame,srcPath, dstPath)
+
         maxRows = srcExcel.GetMaxRow() if srcExcel.GetMaxRow(
         ) >= dstExcel.GetMaxRow() else dstExcel.GetMaxRow()
         maxCols = srcExcel.GetMaxColumn() if srcExcel.GetMaxColumn(
@@ -106,10 +103,20 @@ class MyApp(tk.Tk):
         self.maxCols = maxCols
 
         self.table1, self.var1 = self.setTable(
-            tableFrame, gridRow=0, gridColumn=0, rows=maxRows, cols=maxCols, excel=srcExcel)
+            tableFrame,
+            gridRow=1,
+            gridColumn=0,
+            rows=maxRows,
+            cols=maxCols,
+            excel=srcExcel)
 
         self.table2, self.var2 = self.setTable(
-            tableFrame, gridRow=0, gridColumn=1, rows=maxRows, cols=maxCols, excel=dstExcel)
+            tableFrame,
+            gridRow=1,
+            gridColumn=2,
+            rows=maxRows,
+            cols=maxCols,
+            excel=dstExcel)
 
         tableFrame.grid(sticky="nsew", row=1, column=0)
 
@@ -129,9 +136,10 @@ class MyApp(tk.Tk):
             height=2,
             relief='groove',
             font=("13"),
-            bg='DeepSkyBlue', fg='white',
+            bg='DeepSkyBlue',
+            fg='white',
             command=partial(self.UploadFile, "srcFile"))
-        uploadFile1Button.grid(row=0, column=0,padx=5,pady=10)
+        uploadFile1Button.grid(row=0, column=0, padx=5, pady=10)
         uploadFile1Button = tk.Button(
             buttonFrame,
             text="选择目标文件",
@@ -139,9 +147,10 @@ class MyApp(tk.Tk):
             height=2,
             relief='groove',
             font=("13"),
-            bg='DeepSkyBlue', fg='white',
+            bg='DeepSkyBlue',
+            fg='white',
             command=partial(self.UploadFile, "dstFile"))
-        uploadFile1Button.grid(row=0, column=2,padx=5,pady=10)
+        uploadFile1Button.grid(row=0, column=2, padx=5, pady=10)
 
         buttonFrame.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=2, column=0)
 
@@ -151,7 +160,6 @@ class MyApp(tk.Tk):
             self.srcPath = fileName
         if whitchFile == "dstFile":
             self.dstPath = fileName
-        self.InitTableTitleFlame(self.srcPath, self.dstPath)
         self.InitTableFlame(self.srcPath, self.dstPath)
         self.InitTabFlame()
 
@@ -166,8 +174,8 @@ class MyApp(tk.Tk):
             exportselection=0,
             titlerows=1,
             titlecols=1,
-            rows=rows+1,
-            cols=cols+1,
+            rows=rows + 1,
+            cols=cols + 1,
             colwidth=9)
 
         #### LIST OF LISTS DEFINING THE ROWS AND VALUES IN THOSE ROWS ####
@@ -225,7 +233,7 @@ class MyApp(tk.Tk):
         tb.config(xscrollcommand=xScrollbar.set)
 
         yScrollbar = Scrollbar(tableFrame)
-        yScrollbar.grid(row=gridRow, column=gridColumn * 2 + 1, sticky="ns")
+        yScrollbar.grid(row=gridRow, column=gridColumn+1, sticky="ns")
         yScrollbar.config(command=ScrollDummy(tb).yview)
         tb.config(yscrollcommand=yScrollbar.set)
 
@@ -236,18 +244,42 @@ class MyApp(tk.Tk):
     def _SetCommonHeader(self, tabControl, title, tabText, headers):
         tab = ttk.Frame(tabControl)
 
-        tabControl.add(tab, text=title,pad=5)
+        tabControl.add(tab, text=title, pad=5)
 
-        monty = tk.LabelFrame(tab, text=tabText,font=(8))
-        monty.grid(sticky=tk.W + tk.E + tk.N + tk.S, column=0, row=0,padx=5,pady=5)
+        monty = tk.LabelFrame(tab, text=tabText, font=(8))
+        monty.grid(
+            sticky=tk.W + tk.E + tk.N + tk.S, column=0, row=0, padx=5, pady=5)
 
-        row, col = 1, 0
+        canvas = tk.Canvas(tab,width=800)  # 创建canvas
+        canvas.grid(row=2, column=0)
+        frame = Frame(canvas)  # 把frame放在canvas里
+        frame.grid(row=0, column=0)  # frame的长宽，和canvas差不多的
+
+        vbar = Scrollbar(tab, orient="vertical")  # 竖直滚动条
+        vbar.grid(row=2, column=4, sticky="ns")
+        vbar.configure(command=canvas.yview)
+        canvas.config(yscrollcommand=vbar.set)  # 设置
+
+        xbar = Scrollbar(tab, orient="horizon")  # 竖直滚动条
+        xbar.grid(row=3, column=0, sticky="wes")
+        xbar.configure(command=canvas.xview)
+
+        canvas.config(yscrollcommand=vbar.set,xscrollcommand=xbar.set)  # 设置
+        canvas.create_window(0, 0, window=frame, anchor="nw")
+
+        row, col = 0, 0
         for header in headers:
-            l = Label(tab, text=header,font=('',15,'bold'))
-            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=col,padx=10,pady=5)
+            l = Label(frame, text=header, font=('', 15, 'bold'))
+            l.grid(
+                sticky=tk.W + tk.E + tk.N + tk.S,
+                row=row,
+                column=col,
+                padx=10,
+                pady=5)
             col += 1
 
-        return tab
+
+        return frame
 
     def _SetRowTab(self, tabControl, title, tabText, headers, data=None):
 
@@ -256,10 +288,10 @@ class MyApp(tk.Tk):
         if not data:
             return
 
-        row = 2
+        row = 1
         for _data in data["new"]:
-            l = Label(tabFrame, text="新增",font=(8))
-            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=0,pady=5)
+            l = Label(tabFrame, text="新增", font=(8))
+            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=0, pady=5)
 
             first = "%i,%i" % (_data, 0)
             last = "%i,%i" % (_data, 10)
@@ -270,12 +302,12 @@ class MyApp(tk.Tk):
                 relief='groove',
                 command=partial(self.SelectCells, first, last))
 
-            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=1,pady=5)
+            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=1, pady=5)
             row += 1
 
         for _data in data["del"]:
-            l = Label(tabFrame, text="删除",font=(8))
-            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=0,pady=5)
+            l = Label(tabFrame, text="删除", font=(8))
+            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=0, pady=5)
 
             first = "%i,%i" % (_data, 0)
             last = "%i,%i" % (_data, 10)
@@ -286,7 +318,7 @@ class MyApp(tk.Tk):
                 relief='groove',
                 width=8,
                 command=partial(self.SelectCells, first, last))
-            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=1,pady=5)
+            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=1, pady=5)
             row += 1
 
     def _SetColumnTab(self, frame, title, tabText, headers, data=None):
@@ -296,10 +328,10 @@ class MyApp(tk.Tk):
         if not data:
             return
 
-        row = 2
+        row = 1
         for _data in data["new"]:
-            l = Label(tabFrame, text="新增",font=(8))
-            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=0,pady=5)
+            l = Label(tabFrame, text="新增", font=(8))
+            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=0, pady=5)
 
             first = "%i,%i" % (0, ExcelHelper.ColumnIndexFromStr(_data))
             last = "%i,%i" % (10, ExcelHelper.ColumnIndexFromStr(_data))
@@ -311,11 +343,11 @@ class MyApp(tk.Tk):
                 width=8,
                 command=partial(self.SelectCells, first, last))
 
-            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=1,pady=5)
+            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=1, pady=5)
             row += 1
         for _data in data["del"]:
-            l = Label(tabFrame, text="删除",font=(8))
-            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=0,pady=5)
+            l = Label(tabFrame, text="删除", font=(8))
+            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=0, pady=5)
 
             first = "%i,%i" % (0, ExcelHelper.ColumnIndexFromStr(_data))
             last = "%i,%i" % (10, ExcelHelper.ColumnIndexFromStr(_data))
@@ -326,7 +358,7 @@ class MyApp(tk.Tk):
                 relief='groove',
                 command=partial(self.SelectCells, first, last))
 
-            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=1,pady=5)
+            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=1, pady=5)
             row += 1
 
     def _SetCellTab(self, tabControl, title, tabText, headers, data=None):
@@ -336,30 +368,37 @@ class MyApp(tk.Tk):
         if not data:
             return
 
-        row = 2
+        row = 1
         for key, _data in list(data.items()):
             coordinate = ExcelHelper.CoordinateFromStr(key)
             first = "%i,%i" % (coordinate[1],
                                ExcelHelper.ColumnIndexFromStr(coordinate[0]))
 
             l = tk.Button(
-                tabFrame, text=key, bg='white',
-                relief='groove',width=8,command=partial(self.SelectCells, first))
+                tabFrame,
+                text=key,
+                bg='white',
+                relief='groove',
+                width=8,
+                command=partial(self.SelectCells, first))
 
             l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=0)
-            l = Label(tabFrame, text=_data[0],font=(8))
-            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=1,padx=8)
-            l = Label(tabFrame, text=_data[1],font=(8))
-            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=2,padx=8)
+            l = Label(tabFrame, text=_data[0], font=(8))
+            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=1, padx=8)
+            l = Label(tabFrame, text=_data[1], font=(8))
+            l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=2, padx=8)
             row += 1
 
     def InitTabFlame(self):
+        s = ttk.Style()
+        s.configure('TNotebook', tabposition='nw')
         tabControl = ttk.Notebook(self)
 
         self._SetRowTab(tabControl, "行增删", "共计新增1行, 删除1行", ["改动", "行号"],
                         self.diffResults.get("rows"))
         self._SetColumnTab(tabControl, "列增删", "共计新增1列, 删除1列", ["改动", "列号"],
                            self.diffResults.get("columns"))
+
         self._SetCellTab(tabControl, "单元格改动", "共计2个单元格", ["坐标", "旧值", "新值"],
                          self.diffResults.get("cells"))
 
@@ -367,27 +406,27 @@ class MyApp(tk.Tk):
 
     def SetDiffColor(self, diffResults):
         for row in diffResults["rows"]["new"]:
-            for col in range(0, self.maxCols+1):
+            for col in range(0, self.maxCols + 1):
                 index = "%i,%i" % (row, col)
                 self.table1.tag_cell("new", index)
                 self.table2.tag_cell("new", index)
 
         for row in diffResults["rows"]["del"]:
-            for col in range(0, self.maxCols+1):
+            for col in range(0, self.maxCols + 1):
                 index = "%i,%i" % (row, col)
                 self.table1.tag_cell("del", index)
                 self.table2.tag_cell("del", index)
 
         for strCol in diffResults["columns"]["new"]:
             col = ExcelHelper.ColumnIndexFromStr(strCol)
-            for row in range(0, self.maxRows+1):
+            for row in range(0, self.maxRows + 1):
                 index = "%i,%i" % (row, col)
                 self.table1.tag_cell("new", index)
                 self.table2.tag_cell("new", index)
 
         for strCol in diffResults["columns"]["del"]:
             col = ExcelHelper.ColumnIndexFromStr(strCol)
-            for row in range(0, self.maxRows+1):
+            for row in range(0, self.maxRows + 1):
                 index = "%i,%i" % (row, col)
                 self.table1.tag_cell("del", index)
                 self.table2.tag_cell("del", index)
@@ -416,6 +455,10 @@ class MyApp(tk.Tk):
         self.table1.selection_set(first, last)
 
         self.table2.selection_set(first, last)
+
+        self.table1.see(first)
+
+        self.table2.see(first)
 
         self.lastSelectCells = (first, last)
 
