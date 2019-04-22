@@ -234,12 +234,10 @@ class MyApp(tk.Tk):
 
 
     def InitTableFlame(self, srcPath, dstPath, srcIndex, dstIndex):
+        print(srcIndex)
+        print(dstIndex)
         if self.tableFrame:
             self.tableFrame.destroy()
-
-        self.InitTabFlame()
-        # if self.tabControl:
-        #     self.tabControl.destroy()
 
         if not srcPath or not dstPath:
             self.srcPath = srcPath
@@ -288,13 +286,14 @@ class MyApp(tk.Tk):
 
         self.tableFrame.grid(sticky="nsew", row=1, column=0)
 
+        self.diffResults = {}
         diffResults = {}
         diffResults = ExcelDiffer.Diff2(self.srcExcel, self.dstExcel)
 
         self.SetDiffColor(diffResults)
 
         self.diffResults = diffResults
-
+        self.InitTabFlame()
 
     def InitButtonFlame(self):
         buttonFrame = Frame(self)
