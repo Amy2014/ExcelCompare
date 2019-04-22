@@ -5,6 +5,8 @@ from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.utils import column_index_from_string
 from openpyxl.utils.cell import coordinate_from_string
+import gc
+import xlrd
 
 class Rect(object):
 
@@ -24,9 +26,11 @@ class Rect(object):
         return self.r[1][0]
 
 class ExcelInfo(object):
-    def __init__(self, data, dataRange):
+    def __init__(self, data, dataRange, sheets_name):
         self.data = data
         self.dataRange = Rect(dataRange)
+        # 获取表格sheet名
+        self.sheets_name = sheets_name
 
     def GetMaxColumn(self):
         return self.dataRange.GetMaxColumn()
@@ -40,34 +44,73 @@ class ExcelInfo(object):
     def GetMinRow(self):
         return self.dataRange.GetMinRow()
 
+    def GetSheetsName(self):
+        return self.sheets_name
 
 class ExcelHelper(object):
-    @staticmethod
-    def OpenExcel(path):
-        wb = load_workbook(path)
+    # @staticmethod
+    # def OpenExcel(path, index):
+    #     wb = load_workbook(path, read_only=True)
+    #
+    #     #获取全部sheet名
+    #     sheets_name = wb.get_sheet_names()
+    #
+    #     sheet = wb.get_sheet_by_name(sheets_name[index])   #获取当前sheet
+    #
+    #     data = []
+    #     minCoordinate, maxCoordinate = [9999999999, 9999999999], [0, 0]
+    #     for y, row in enumerate(sheet.rows):
+    #         _data = []
+    #         for x, cell in enumerate(row):
+    #             val = cell.value
+    #             _data.append(val)
+    #             if not val:
+    #                 continue
+    #             if x < minCoordinate[0]:
+    #                 minCoordinate[0] = x
+    #             if y < minCoordinate[1]:
+    #                 minCoordinate[1] = y
+    #             if x > maxCoordinate[0]:
+    #                 maxCoordinate[0] = x
+    #             if y > maxCoordinate[1]:
+    #                 maxCoordinate[1] = y
+    #         data.append(_data)
+    #     return ExcelInfo(data, (minCoordinate, maxCoordinate), sheets_name)
 
-        sheet = wb.active
+    @staticmethod
+    def OpenExcel(path, index):
+        wb =  xlrd.open_workbook(path, on_demand = True)
+
+        # 获取全部sheet名
+        sheets_name = wb.sheet_names()
+
+        sheet = wb.sheet_by_name(sheets_name[index])  # 获取当前sheet
 
         data = []
         minCoordinate, maxCoordinate = [9999999999, 9999999999], [0, 0]
-        for y, row in enumerate(sheet.rows):
+        y = 0
+        rows = sheet.get_rows()
+        for row in rows:
             _data = []
-            for x, cell in enumerate(row):
+            x = 0
+            for cell in row:
                 val = cell.value
                 _data.append(val)
-                if not val:
-                    continue
-                if x < minCoordinate[0]:
-                    minCoordinate[0] = x
-                if y < minCoordinate[1]:
-                    minCoordinate[1] = y
-                if x > maxCoordinate[0]:
-                    maxCoordinate[0] = x
-                if y > maxCoordinate[1]:
-                    maxCoordinate[1] = y
+                if val:
+                    if x < minCoordinate[0]:
+                        minCoordinate[0] = x
+                    if y < minCoordinate[1]:
+                        minCoordinate[1] = y
+                    if x > maxCoordinate[0]:
+                        maxCoordinate[0] = x
+                    if y > maxCoordinate[1]:
+                        maxCoordinate[1] = y
+                x += 1
             data.append(_data)
+            y += 1
 
-        return ExcelInfo(data, (minCoordinate, maxCoordinate))
+        #wb.release_resources()
+        return ExcelInfo(data, (minCoordinate, maxCoordinate), sheets_name)
 
     @staticmethod
     def ColumnIndexFromStr(strCol):

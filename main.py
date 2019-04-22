@@ -2,7 +2,8 @@
 
 import sys
 import getopt
-import json
+import xlrd
+import gc
 
 from functools import partial
 
@@ -39,12 +40,15 @@ class MyApp(tk.Tk):
 
         self.srcPath = srcPath
         self.dstPath = dstPath
+        self.tableFrame = None
+        self.tabControl = None
+
         self.diffResults = {}
         self.lastSelectCells = None
 
         self.InitFrame()
 
-        self.InitTableFlame(srcPath, dstPath)
+        self.InitTableFlame(srcPath, dstPath, 0, 0)
 
         self.InitButtonFlame()
 
@@ -64,9 +68,7 @@ class MyApp(tk.Tk):
             srcPath = ""
         if dstPath is None:
             dstPath = ""
-
         #tableTitleFrame = Frame(self)
-
         # srcPathLabel = Label(tableTitleFrame, text=srcPath)
         # srcPathLabel.grid(row=0, column=0)
 
@@ -76,20 +78,95 @@ class MyApp(tk.Tk):
         dstPathLabel = Label(tableFrame, text=dstPath)
         dstPathLabel.grid(row=0, column=2,sticky=tk.E)
 
+        gc.collect()
 
-    def InitTableFlame(self, srcPath, dstPath):
+    def InitTableSheetFlame(self, tableFrame, srcPath, dstPath, srcExcel, dstExcel, srcIndex, dstIndex):
+
+        srcSheetNames = srcExcel.GetSheetsName()
+        dstSheetNames = dstExcel.GetSheetsName()
+
+        srcSheetFrame = Frame(tableFrame)
+        srcSheetFrame.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=3, column=0)
+
+        dstSheetFrame = Frame(tableFrame)
+        dstSheetFrame.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=3, column=2)
+
+        src_col_count = 0
+        for sheet_title in srcSheetNames:
+            if src_col_count == srcIndex:
+                srcSheetButton = tk.Button(
+                    srcSheetFrame,
+                    text=sheet_title,
+                    width=8,
+                    height=1,
+                    relief='groove',
+                    font=("11"),
+                    bg='LightGrey',
+                    fg='black',
+                )
+            else:
+                srcSheetButton = tk.Button(
+                    srcSheetFrame,
+                    text=sheet_title,
+                    width=8,
+                    height=1,
+                    relief='groove',
+                    font=("11"),
+                    bg='WhiteSmoke',
+                    fg='black',
+                    command=partial(self.InitTableFlame, srcPath, dstPath, src_col_count, dstIndex)
+                )
+            srcSheetButton.grid(row=0, column=src_col_count, padx=5, pady=10)
+            src_col_count += 1
+
+        dst_col_count = 0
+        for sheet_title in dstSheetNames:
+            if dst_col_count == dstIndex:
+                dstSheetButton = tk.Button(
+                    dstSheetFrame,
+                    text=sheet_title,
+                    width=8,
+                    height=1,
+                    relief='groove',
+                    font=("11"),
+                    bg='LightGrey',
+                    fg='black',
+                )
+            else:
+                dstSheetButton = tk.Button(
+                    dstSheetFrame,
+                    text=sheet_title,
+                    width=8,
+                    height=1,
+                    relief='groove',
+                    font=("11"),
+                    bg='WhiteSmoke',
+                    fg='black',
+                    command=partial(self.InitTableFlame, srcPath, dstPath, srcIndex, dst_col_count)
+                )
+            dstSheetButton.grid(row=0, column=dst_col_count, padx=5, pady=10)
+            dst_col_count += 1
+
+        gc.collect()
+
+    def InitTableFlame(self, srcPath, dstPath, srcIndex, dstIndex):
+        if self.tableFrame:
+            self.tableFrame.destroy()
+
         if not srcPath or not dstPath:
             tableFrame = Frame(self)
             tableFrame.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=1, column=0)
             return
 
-        srcExcel = ExcelHelper.OpenExcel(srcPath)
+        srcExcel = ExcelHelper.OpenExcel(srcPath, srcIndex)
 
-        dstExcel = ExcelHelper.OpenExcel(dstPath)
+        dstExcel = ExcelHelper.OpenExcel(dstPath, dstIndex)
 
         tableFrame = Frame(self)
 
         self.InitTableTitleFlame(tableFrame,srcPath, dstPath)
+        #分别显示表格sheet选项
+        self.InitTableSheetFlame(tableFrame, srcPath, dstPath, srcExcel, dstExcel, srcIndex, dstIndex)
 
         maxRows = srcExcel.GetMaxRow() if srcExcel.GetMaxRow(
         ) >= dstExcel.GetMaxRow() else dstExcel.GetMaxRow()
@@ -126,6 +203,8 @@ class MyApp(tk.Tk):
 
         self.diffResults = diffResults
 
+        gc.collect()
+
     def InitButtonFlame(self):
         buttonFrame = Frame(self)
 
@@ -151,6 +230,18 @@ class MyApp(tk.Tk):
             fg='white',
             command=partial(self.UploadFile, "dstFile"))
         uploadFile1Button.grid(row=0, column=2, padx=5, pady=10)
+        #清空excel列表
+        deleteFile1Button = tk.Button(
+            buttonFrame,
+            text="清空已选Excel",
+            width=15,
+            height=2,
+            relief='groove',
+            font=("13"),
+            bg='DeepSkyBlue',
+            fg='white',
+            command=partial(self.DeleteFile))
+        deleteFile1Button.grid(row=0, column=3, padx=5, pady=10)
 
         buttonFrame.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=2, column=0)
 
@@ -160,8 +251,20 @@ class MyApp(tk.Tk):
             self.srcPath = fileName
         if whitchFile == "dstFile":
             self.dstPath = fileName
-        self.InitTableFlame(self.srcPath, self.dstPath)
+        self.InitTableFlame(self.srcPath, self.dstPath, 0, 0)
         self.InitTabFlame()
+        gc.collect()
+    #清空表格
+    def DeleteFile(self):
+        self.srcPath = None
+        self.dstPath = None
+        self.InitTableFlame(self.srcPath, self.dstPath, 0, 0)
+        gc.collect()
+    # 更换Sheet
+    def ChangeSheet(self,):
+        self.srcPath = None
+        self.dstPath = None
+        self.InitTableFlame(self.srcPath, self.dstPath, 0, 0)
 
     def setTable(self, tableFrame, gridRow, gridColumn, rows, cols, excel):
         tb = tktable.Table(
@@ -169,7 +272,7 @@ class MyApp(tk.Tk):
             selectmode="browse",
             state='disabled',
             width=8,
-            height=13,
+            height=11,
             font=(6),
             exportselection=0,
             titlerows=1,
@@ -238,7 +341,6 @@ class MyApp(tk.Tk):
         tb.config(yscrollcommand=yScrollbar.set)
 
         tb.grid(sticky="nsew", row=gridRow, column=gridColumn)
-
         return tb, var
 
     def _SetCommonHeader(self, tabControl, title, tabText, headers):
@@ -278,7 +380,6 @@ class MyApp(tk.Tk):
                 pady=5)
             col += 1
 
-
         return frame
 
     def _SetRowTab(self, tabControl, title, tabText, headers, data=None):
@@ -290,7 +391,7 @@ class MyApp(tk.Tk):
 
         row = 1
         for _data in data["new"]:
-            l = Label(tabFrame, text="新增", font=(8))
+            l = Label(tabFrame, text="新增", font=(6))
             l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=0, pady=5)
 
             first = "%i,%i" % (_data, 0)
@@ -306,7 +407,7 @@ class MyApp(tk.Tk):
             row += 1
 
         for _data in data["del"]:
-            l = Label(tabFrame, text="删除", font=(8))
+            l = Label(tabFrame, text="删除", font=(6))
             l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=0, pady=5)
 
             first = "%i,%i" % (_data, 0)
@@ -330,7 +431,7 @@ class MyApp(tk.Tk):
 
         row = 1
         for _data in data["new"]:
-            l = Label(tabFrame, text="新增", font=(8))
+            l = Label(tabFrame, text="新增", font=(6))
             l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=0, pady=5)
 
             first = "%i,%i" % (0, ExcelHelper.ColumnIndexFromStr(_data))
@@ -346,7 +447,7 @@ class MyApp(tk.Tk):
             l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=1, pady=5)
             row += 1
         for _data in data["del"]:
-            l = Label(tabFrame, text="删除", font=(8))
+            l = Label(tabFrame, text="删除", font=(6))
             l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=0, pady=5)
 
             first = "%i,%i" % (0, ExcelHelper.ColumnIndexFromStr(_data))
@@ -383,11 +484,12 @@ class MyApp(tk.Tk):
                 command=partial(self.SelectCells, first))
 
             l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=0)
-            l = Label(tabFrame, text=_data[0], font=(8))
+            l = Label(tabFrame, text=_data[0], font=(6))
             l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=1, padx=8)
-            l = Label(tabFrame, text=_data[1], font=(8))
+            l = Label(tabFrame, text=_data[1], font=(6))
             l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=2, padx=8)
             row += 1
+
 
     def InitTabFlame(self):
         s = ttk.Style()
@@ -444,6 +546,7 @@ class MyApp(tk.Tk):
         self.table2.tag_configure('del', background='red')
         self.table1.tag_configure('mod', background='yellow')
         self.table2.tag_configure('mod', background='yellow')
+
 
     def SelectCells(self, first, last=None):
         if self.lastSelectCells:
