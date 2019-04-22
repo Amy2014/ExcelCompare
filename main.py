@@ -16,7 +16,7 @@ from differ import ExcelDiffer, ExcelHelper
 
 import tktable
 
-limit = 10
+limit = 6
 
 class ScrollDummy(object):
     def __init__(self, table):
@@ -44,10 +44,29 @@ class ScrollDataDummy(object):
         self.tkTable = tkTable
         self.tabFrame = tabFrame
         self.data = data
-        self.idx = 1
+        self.idx = 0
         self.scrollType = scrollType
 
     def yview(self, *args):
+        print(len(self.data))
+        #n = len(self.data) - limit
+        n = len(self.data) - (self.idx+6)
+        print("self.idx==="+str(self.idx))
+        step = 0
+        if args[0] == "scroll":
+            step = int(args[1])
+        if args[0] == "moveto":
+            step = int(float(args[1]))
+        print("step==="+str(step))
+
+        if step >0 and n<=0:
+            return
+        if step < 0 and self.idx <=0:
+            print("n=" + str(n))
+            self.idx = 0
+            return
+        self.idx += step
+
         if self.scrollType == ScrollDataDummy.SCROLL_TYPE_CELL:
             row = 1
             for key, _data in list(
@@ -117,7 +136,6 @@ class ScrollDataDummy(object):
                 l.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=row, column=1, pady=5)
                 row += 1
 
-        self.idx += 1
 
 class MyApp(tk.Tk):
     def __init__(self, srcPath=None, dstPath=None):
@@ -234,8 +252,7 @@ class MyApp(tk.Tk):
 
 
     def InitTableFlame(self, srcPath, dstPath, srcIndex, dstIndex):
-        print(srcIndex)
-        print(dstIndex)
+
         if self.tableFrame:
             self.tableFrame.destroy()
 
