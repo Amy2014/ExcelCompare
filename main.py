@@ -48,21 +48,19 @@ class ScrollDataDummy(object):
         self.scrollType = scrollType
 
     def yview(self, *args):
-        print(len(self.data))
-        #n = len(self.data) - limit
         n = len(self.data) - (self.idx+6)
-        print("self.idx==="+str(self.idx))
+        #print("self.idx==="+str(self.idx))
         step = 0
         if args[0] == "scroll":
             step = int(args[1])
         if args[0] == "moveto":
             step = int(float(args[1]))
-        print("step==="+str(step))
+        #print("step==="+str(step))
 
         if step >0 and n<=0:
             return
         if step < 0 and self.idx <=0:
-            print("n=" + str(n))
+            #print("n=" + str(n))
             self.idx = 0
             return
         self.idx += step
@@ -143,6 +141,8 @@ class MyApp(tk.Tk):
 
         self.srcPath = srcPath
         self.dstPath = dstPath
+        self.srcIndex = -1
+        self.dstIndex = -1
         self.tableFrame = None
         self.tabControl = None
         self.frame = None
@@ -263,16 +263,27 @@ class MyApp(tk.Tk):
             self.tableFrame.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=1, column=0)
             return
 
-        self.srcExcel = ExcelHelper.OpenExcel(srcPath, srcIndex)
-        self.srcPath = srcPath
-        self.dstExcel = ExcelHelper.OpenExcel(dstPath, dstIndex)
-        self.srcPath = srcPath
+        #有变化才会更新
+        if self.srcIndex != srcIndex:
+            self.srcExcel = ExcelHelper.OpenExcel(srcPath, srcIndex)
+            self.srcPath = srcPath
+            self.srcIndex = srcIndex
+
+        if self.dstIndex != dstIndex:
+            self.dstExcel = ExcelHelper.OpenExcel(dstPath, dstIndex)
+            self.dstPath = dstPath
+            self.dstIndex = dstIndex
+
+        # self.srcExcel = ExcelHelper.OpenExcel(srcPath, srcIndex)
+        # self.srcPath = srcPath
+        # self.dstExcel = ExcelHelper.OpenExcel(dstPath, dstIndex)
+        # self.srcPath = srcPath
 
         self.tableFrame = Frame(self)
 
         self.InitTableTitleFlame(self.tableFrame,self.srcPath, self.dstPath)
         #分别显示表格sheet选项
-        self.InitTableSheetFlame(self.tableFrame, self.srcPath, self.dstPath, self.srcExcel, self.dstExcel, srcIndex, dstIndex)
+        self.InitTableSheetFlame(self.tableFrame, self.srcPath, self.dstPath, self.srcExcel, self.dstExcel, self.srcIndex, self.dstIndex)
 
         maxRows = self.srcExcel.GetMaxRow() if self.srcExcel.GetMaxRow(
         ) >= self.dstExcel.GetMaxRow() else self.dstExcel.GetMaxRow()
@@ -356,14 +367,21 @@ class MyApp(tk.Tk):
         fileName = filedialog.askopenfilename()
         if whitchFile == "srcFile" and self.srcPath != fileName:
             self.srcPath = fileName
+            self.srcIndex = -1
+            #srcPath = fileName
         if whitchFile == "dstFile":
             self.dstPath = fileName
+            self.dstIndex = -1
+            #dstPath = fileName
         self.InitTableFlame(self.srcPath, self.dstPath, 0, 0)
+        #self.InitTableFlame(srcPath, dstPath, 0, 0)
         self.InitTabFlame()
     #清空表格
     def DeleteFile(self):
         self.srcPath = None
         self.dstPath = None
+        self.srcIndex = -1
+        self.dstIndex = -1
         self.InitTableFlame(self.srcPath, self.dstPath, 0, 0)
         self.diffResults = {}
         self.InitTabFlame()
