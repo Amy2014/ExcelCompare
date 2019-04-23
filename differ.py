@@ -48,34 +48,6 @@ class ExcelInfo(object):
         return self.sheets_name
 
 class ExcelHelper(object):
-    # @staticmethod
-    # def OpenExcel(path, index):
-    #     wb = load_workbook(path, read_only=True)
-    #
-    #     #获取全部sheet名
-    #     sheets_name = wb.get_sheet_names()
-    #
-    #     sheet = wb.get_sheet_by_name(sheets_name[index])   #获取当前sheet
-    #
-    #     data = []
-    #     minCoordinate, maxCoordinate = [9999999999, 9999999999], [0, 0]
-    #     for y, row in enumerate(sheet.rows):
-    #         _data = []
-    #         for x, cell in enumerate(row):
-    #             val = cell.value
-    #             _data.append(val)
-    #             if not val:
-    #                 continue
-    #             if x < minCoordinate[0]:
-    #                 minCoordinate[0] = x
-    #             if y < minCoordinate[1]:
-    #                 minCoordinate[1] = y
-    #             if x > maxCoordinate[0]:
-    #                 maxCoordinate[0] = x
-    #             if y > maxCoordinate[1]:
-    #                 maxCoordinate[1] = y
-    #         data.append(_data)
-    #     return ExcelInfo(data, (minCoordinate, maxCoordinate), sheets_name)
 
     @staticmethod
     def OpenExcel(path, index):

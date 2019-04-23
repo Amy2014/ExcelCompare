@@ -364,12 +364,14 @@ class MyApp(tk.Tk):
         buttonFrame.grid(sticky=tk.W + tk.E + tk.N + tk.S, row=2, column=0)
 
     def UploadFile(self, whitchFile):
-        fileName = filedialog.askopenfilename()
+        fileName = filedialog.askopenfilename(parent=self)
+        if fileName == '':
+            return
         if whitchFile == "srcFile" and self.srcPath != fileName:
             self.srcPath = fileName
             self.srcIndex = -1
             #srcPath = fileName
-        if whitchFile == "dstFile":
+        if whitchFile == "dstFile" and self.dstPath != fileName:
             self.dstPath = fileName
             self.dstIndex = -1
             #dstPath = fileName
